@@ -65,7 +65,65 @@ usertrap(void)
     intr_on();
 
     syscall();
-  } else if((which_dev = devintr()) != 0){
+  } 
+  // In usertrap(), this is the final, corrected COW handler.
+
+else if(r_scause() == 15) { // Store/write page fault
+  uint64 fault_va = r_stval();
+  struct proc *p = myproc();
+  pte_t *pte;
+  
+  if(fault_va >= p->sz) {
+    p->killed = 1;
+  } else {
+    fault_va = PGROUNDDOWN(fault_va);
+    pte = walk(p->pagetable, fault_va, 0);
+
+    if(pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0) {
+      p->killed = 1;
+    } else if((*pte & PTE_COW) == 0) {
+      p->killed = 1;
+    } else {
+      // It's a legal COW fault. Handle it.
+      uint64 pa = PTE2PA(*pte);
+      
+      acquire(&ref_lock);
+      uint ref_count = ref_counts[pa_to_ref_idx(pa)];
+      release(&ref_lock);
+
+      if(ref_count > 1) {
+        // Shared page: allocate a new page and copy the content.
+        char *mem = kalloc();
+        if(mem == 0) {
+          p->killed = 1;
+        } else {
+          // --- THE FIX IS HERE ---
+          // 1. Read the flags from the old PTE BEFORE unmapping it.
+          uint flags = PTE_FLAGS(*pte);
+
+          // 2. Copy the content from the old page to the new one.
+          memmove(mem, (void*)pa, PGSIZE);
+          
+          // 3. Unmap the old, read-only page from the process's page table.
+          uvmunmap(p->pagetable, fault_va, 1, 0);
+
+          // 4. Map the new, writable page, using the SAVED flags.
+          if(mappages(p->pagetable, fault_va, PGSIZE, (uint64)mem, (flags | PTE_W) & ~PTE_COW) != 0) {
+            kfree(mem);
+            p->killed = 1;
+          }
+          
+          // 5. Decrement the ref count of the old physical page.
+          dec_ref(pa);
+        }
+      } else {
+        // Page is not shared (ref_count == 1): just make it writable.
+        *pte = (*pte & ~PTE_COW) | PTE_W;
+      }
+    }
+  }
+}
+  else if((which_dev = devintr()) != 0){
     // ok
   } else {
     printf("usertrap(): unexpected scause 0x%lx pid=%d\n", r_scause(), p->pid);
