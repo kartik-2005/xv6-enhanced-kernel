@@ -20,4 +20,8 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-#define SYS_top 23  // choose the next available number
+#define SYS_top 22  // choose the next available number
+#define SYS_set_priority  23
+#define SYS_get_priority  24
+// #define SYS_set_job_length 25   // choose next available number
+

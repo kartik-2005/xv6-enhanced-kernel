@@ -125,3 +125,32 @@ sys_top(void)
 
   return count;  // return number of processes copied
 }
+
+uint64
+sys_set_priority(void)
+{
+  int n;
+  argint(0, &n);
+    // return -1;
+  if(n <= 0 || n > 1000)
+    return -1;
+
+  struct proc *p = myproc();
+  acquire(&p->lock);       // acquire current process's lock
+  p->priority = n;         // safely update priority field
+  release(&p->lock);       // release the lock
+  return 0;
+}
+
+
+uint64
+sys_get_priority(void)
+{
+  struct proc *p = myproc();
+  int prio;
+  acquire(&p->lock);
+  prio = p->priority;
+  release(&p->lock);
+  return prio;
+}
+

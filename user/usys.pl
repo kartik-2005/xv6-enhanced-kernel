@@ -37,3 +37,6 @@ entry("sbrk");
 entry("sleep");
 entry("uptime");
 entry("top");
+entry("set_priority");
+entry("get_priority");
+# entry("set_job_length");

@@ -23,6 +23,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int top(struct procinfo *buf, int max);
+int set_priority(int);
+int get_priority(void);
+
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -38,6 +41,7 @@ void* memset(void*, int, uint);
 int atoi(const char*);
 int memcmp(const void *, const void *, uint);
 void *memcpy(void *, const void *, uint);
+// int set_job_length(int);
 
 // umalloc.c
 void* malloc(uint);

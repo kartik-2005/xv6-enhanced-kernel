@@ -77,6 +77,8 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
+  // #ifdef FCFS
+  // #else
   if(which_dev == 2){
     if(which_dev == 2){
       if(myproc() != 0){
@@ -86,6 +88,7 @@ usertrap(void)
     }
     yield();
   }
+  // #endif
 
   usertrapret();
 }
@@ -161,6 +164,7 @@ kerneltrap()
   if(which_dev == 2 && myproc() != 0)
     yield();
 
+  
   // the yield() may have caused some traps to occur,
   // so restore trap registers for use by kernelvec.S's sepc instruction.
   w_sepc(sepc);
