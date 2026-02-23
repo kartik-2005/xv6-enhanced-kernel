@@ -1,10 +1,12 @@
 #include "types.h"
 #include "riscv.h"
+#include "procinfo.h"
 #include "defs.h"
 #include "param.h"
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+extern void top(void);  // Declaration of the top() function defined in proc.c
 
 uint64
 sys_exit(void)
@@ -90,4 +92,36 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+extern struct proc proc[NPROC];
+
+uint64
+sys_top(void)
+{
+  uint64 addr;  // user pointer to buffer
+  int max;      // max number of entries
+
+  argaddr(0, &addr);
+  argint(1, &max);
+
+  struct procinfo info[max];
+  int count = 0;
+
+  for (struct proc *p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+    if (p->state != UNUSED && count < max) {
+      info[count].pid = p->pid;
+      info[count].state = p->state;
+      info[count].ticks = p->ticks;
+      safestrcpy(info[count].name, p->name, MAX_NAME_LEN);
+      count++;
+    }
+    release(&p->lock);
+  }
+
+  if (copyout(myproc()->pagetable, addr, (char *)info, sizeof(struct procinfo) * count) < 0)
+    return -1;
+
+  return count;  // return number of processes copied
 }

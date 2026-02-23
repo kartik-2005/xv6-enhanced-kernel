@@ -77,8 +77,15 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  if(which_dev == 2)
+  if(which_dev == 2){
+    if(which_dev == 2){
+      if(myproc() != 0){
+        myproc()->ticks++;
+        // printf("Tick Value is %u" , myproc()->ticks);
+      }
+    }
     yield();
+  }
 
   usertrapret();
 }

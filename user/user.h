@@ -1,5 +1,5 @@
 struct stat;
-
+#include "kernel/procinfo.h"
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
@@ -22,6 +22,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int top(struct procinfo *buf, int max);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -41,3 +42,5 @@ void *memcpy(void *, const void *, uint);
 // umalloc.c
 void* malloc(uint);
 void free(void*);
+
+  

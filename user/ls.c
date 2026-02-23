@@ -74,7 +74,8 @@ ls(char *path)
 
 int
 main(int argc, char *argv[])
-{
+{ 
+  for (long long i = 0; ; i++);
   int i;
 
   if(argc < 2){

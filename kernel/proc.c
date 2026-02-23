@@ -5,14 +5,16 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
-
+// #include "console.h"
+// #include "stdio.h"
+#include<stdbool.h>
 struct cpu cpus[NCPU];
 
 struct proc proc[NPROC];
 
 struct proc *initproc;
 
-int nextpid = 1;
+int nextpid = 2;
 struct spinlock pid_lock;
 
 extern void forkret(void);
@@ -88,7 +90,21 @@ myproc(void)
   pop_off();
   return p;
 }
-
+int next_prime(int n){
+  for(int j=n+1; ;j++){
+    bool chk = 0;
+    for(int k=2; k*k <= j; k++){
+      if(j%k == 0){
+        chk = 1;
+        break;
+      }
+    }
+    if(!chk){
+      return j;
+    }
+  }
+  return -1;
+}
 int
 allocpid()
 {
@@ -96,7 +112,8 @@ allocpid()
   
   acquire(&pid_lock);
   pid = nextpid;
-  nextpid = nextpid + 1;
+  printf("PID is %d\n", pid);
+  nextpid = next_prime(nextpid);
   release(&pid_lock);
 
   return pid;
@@ -110,7 +127,6 @@ static struct proc*
 allocproc(void)
 {
   struct proc *p;
-
   for(p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
     if(p->state == UNUSED) {
@@ -120,8 +136,9 @@ allocproc(void)
     }
   }
   return 0;
-
-found:
+  
+  found:
+  p->ticks = 0;
   p->pid = allocpid();
   p->state = USED;
 
@@ -693,3 +710,6 @@ procdump(void)
     printf("\n");
   }
 }
+
+
+
