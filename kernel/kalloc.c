@@ -9,6 +9,11 @@
 #include "riscv.h"
 #include "defs.h"
 
+struct page_metadata page_meta[PHYSTOP / PGSIZE];
+// Head of the MRU list
+struct page_metadata mru_list_head;
+struct spinlock mru_lock;
+
 void freerange(void *pa_start, void *pa_end);
 
 extern char end[]; // first address after kernel.
@@ -27,6 +32,13 @@ void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
+  initlock(&mru_lock, "mru_list");
+  mru_list_head.next = &mru_list_head;
+  mru_list_head.prev = &mru_list_head;
+  // Initialize locks for each page's metadata
+  for(int i = 0; i < PHYSTOP / PGSIZE; i++) {
+    initlock(&page_meta[i].lock, "page_meta");
+  }
   freerange(end, (void*)PHYSTOP);
 }
 

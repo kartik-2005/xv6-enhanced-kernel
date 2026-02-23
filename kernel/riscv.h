@@ -9,6 +9,16 @@ r_mhartid()
   return x;
 }
 
+// In kernel/riscv.h or a new header
+struct page_metadata {
+  struct spinlock lock;
+  struct page_metadata *prev;
+  struct page_metadata *next;
+  // You can add other fields here if needed, like which process owns it
+};
+
+extern struct page_metadata page_meta[];
+extern struct page_metadata mru_list_head;
 // Machine Status Register, mstatus
 
 #define MSTATUS_MPP_MASK (3L << 11) // previous mode.
